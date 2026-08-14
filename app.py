@@ -106,6 +106,33 @@ if st.button(
 ):
 
     # ======================================
+    # Security: Input validation
+    # ======================================
+
+    if not food.strip():
+        st.error("商品名を入力してください。")
+        st.stop()
+
+    if stock <= 0:
+        st.error("在庫数は1個以上入力してください。")
+        st.stop()
+
+    if average_sales < 0:
+        st.error("平均販売数は0以上を入力してください。")
+        st.stop()
+
+    if price <= 0:
+        st.error("商品価格は1円以上入力してください。")
+        st.stop()
+
+    result = predict_waste(
+        stock,
+        average_sales,
+        hours_remaining,
+        weather_value
+    )
+
+    # ======================================
     # Step 1: Prediction
     # ======================================
 
@@ -275,10 +302,9 @@ if st.button(
                     "AIから回答を取得できませんでした。"
                 )
 
-        except Exception as e:
-
+        except Exception:
             st.error(
                 "AI Recommendation の取得に失敗しました。"
+                "しばらくしてからもう一度お試しください。"
             )
-
-            st.code(str(e))
+            
