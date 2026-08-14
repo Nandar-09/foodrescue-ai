@@ -9,7 +9,7 @@ from ai_recommendation import generate_ai_recommendation
 # ==========================================
 
 st.set_page_config(
-    page_title="FoodRescue AI",
+    page_title="FoodRescue AI v1.1",
     page_icon="🍱",
     layout="wide"
 )
@@ -19,7 +19,7 @@ st.set_page_config(
 # Header
 # ==========================================
 
-st.title("🍱 FoodRescue AI")
+st.title("🍱 FoodRescue AI v1.1")
 
 st.subheader(
     "AIで食品ロスを減らすスマート販売支援システム"
@@ -27,7 +27,7 @@ st.subheader(
 
 st.write(
     "販売データから売れ残りを予測し、"
-    "AIが最適な販売戦略を提案します。"
+    "AIが最適な割引率と販売戦略を提案します。"
 )
 
 st.divider()
@@ -55,6 +55,13 @@ with col1:
         step=1
     )
 
+    price = st.number_input(
+        "商品価格（円）",
+        min_value=0,
+        value=600,
+        step=10
+    )
+
 
 with col2:
 
@@ -73,15 +80,15 @@ with col2:
         step=1
     )
 
+    weather = st.selectbox(
+        "現在の天気",
+        [
+            "Sunny ☀️",
+            "Cloudy ☁️",
+            "Rainy 🌧️"
+        ]
+    )
 
-weather = st.selectbox(
-    "現在の天気",
-    [
-        "Sunny ☀️",
-        "Cloudy ☁️",
-        "Rainy 🌧️"
-    ]
-)
 
 weather_value = weather.split()[0]
 
@@ -107,6 +114,10 @@ if st.button(
         average_sales,
         hours_remaining,
         weather_value
+    )
+
+    discounted_price = round(
+        price * (1 - result["discount"] / 100)
     )
 
 
@@ -144,7 +155,36 @@ if st.button(
 
 
     # ======================================
-    # Step 3: Prediction summary
+    # Step 3: Price recommendation
+    # ======================================
+
+    st.divider()
+
+    st.header("💰 AI価格提案")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.metric(
+            "通常価格",
+            f"¥{price}"
+        )
+
+    with col2:
+        st.metric(
+            "推奨割引率",
+            f"{result['discount']}%"
+        )
+
+    with col3:
+        st.metric(
+            "割引後価格",
+            f"¥{discounted_price}"
+        )
+
+
+    # ======================================
+    # Step 4: Prediction summary
     # ======================================
 
     st.divider()
@@ -169,20 +209,45 @@ if st.button(
             f"✅ {food}の廃棄リスクは低いです。"
         )
 
-
     st.info(
         f"""
 **予測廃棄率:** {result['waste_rate']}%
 
+**予測売れ残り:** 約 {result['leftover']}個
+
 **推奨割引率:** {result['discount']}%
 
-**予測売れ残り:** 約 {result['leftover']}個
+**おすすめ販売価格:** ¥{discounted_price}
 """
     )
 
 
     # ======================================
-    # Step 4: OrcaRouter AI Recommendation
+    # Step 5: Graph
+    # ======================================
+
+    
+
+    st.divider()
+
+    st.header("📊 在庫・販売予測")
+
+    if stock > 0:
+        sales_ratio = min(result["expected_sales"] / stock, 1.0)
+        leftover_ratio = min(result["leftover"] / stock, 1.0)
+    else:
+        sales_ratio = 0
+        leftover_ratio = 0
+
+    st.write(f"予測販売数：{result['expected_sales']}個")
+    st.progress(sales_ratio)
+
+    st.write(f"予測売れ残り：{result['leftover']}個")
+    st.progress(leftover_ratio)
+
+
+    # ======================================
+    # Step 6: OrcaRouter AI Recommendation
     # ======================================
 
     st.divider()
